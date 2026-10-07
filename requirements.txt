@@ -1,0 +1,5 @@
+pdfplumber>=0.11.0
+pypdf>=5.0.0
+Jinja2>=3.1.0
+pytest>=8.0.0
+archunitpython~=1.8.1

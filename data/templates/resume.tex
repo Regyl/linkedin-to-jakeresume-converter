@@ -1,0 +1,287 @@
+%-------------------------
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
+%
+% This file is the Jake's Resume layout used by the converter.
+% Jinja placeholders are filled from the parsed PDF. Change spacing,
+% section style, and commands here without editing the parser.
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  % T1 stays the default for Latin text. T2A supplies Cyrillic glyphs.
+  \usepackage[T2A,T1]{fontenc}
+  % Unicode Cyrillic expands to \CYR... commands, which are defined only in
+  % T2A. Give them a default so they switch encoding instead of failing in T1.
+  \ExplSyntaxOn
+  \clist_map_inline:nn
+    {
+      \CYRA,\cyra,\CYRB,\cyrb,\CYRV,\cyrv,\CYRG,\cyrg,\CYRD,\cyrd,
+      \CYRE,\cyre,\CYRZH,\cyrzh,\CYRZ,\cyrz,\CYRI,\cyri,\CYRISHRT,\cyrishrt,
+      \CYRK,\cyrk,\CYRL,\cyrl,\CYRM,\cyrm,\CYRN,\cyrn,\CYRO,\cyro,
+      \CYRP,\cyrp,\CYRR,\cyrr,\CYRS,\cyrs,\CYRT,\cyrt,\CYRU,\cyru,
+      \CYRF,\cyrf,\CYRH,\cyrh,\CYRC,\cyrc,\CYRCH,\cyrch,\CYRSH,\cyrsh,
+      \CYRSHCH,\cyrshch,\CYRHRDSN,\cyrhrdsn,\CYRERY,\cyrery,\CYRSFTSN,\cyrsftsn,
+      \CYREREV,\cyrerev,\CYRYU,\cyryu,\CYRYA,\cyrya,\CYRYO,\cyryo,
+      \CYRDJE,\cyrdje,\CYRIE,\cyrie,\CYRDZE,\cyrdze,\CYRII,\cyrii,
+      \CYRYI,\cyryi,\CYRJE,\cyrje,\CYRLJE,\cyrlje,\CYRNJE,\cyrnje,
+      \CYRTSHE,\cyrtshe,\CYRUSHRT,\cyrushrt,\CYRDZHE,\cyrdzhe,
+      \CYRGUP,\cyrgup,\CYRGHCRS,\cyrghcrs,\CYRSHHA,\cyrshha,
+      \CYRZHDSC,\cyrzhdsc,\CYRZDSC,\cyrzdsc,\CYRKDSC,\cyrkdsc,
+      \CYRKBEAK,\cyrkbeak,\CYRKVCRS,\cyrkvcrs,\CYRAE,\cyrae,
+      \CYRNDSC,\cyrndsc,\CYRNG,\cyrng,\CYROTLD,\cyrotld,\CYRSDSC,\cyrsdsc,
+      \CYRY,\cyry,\CYRYHCRS,\cyryhcrs,\CYRHDSC,\cyrhdsc,\CYRCHVCRS,\cyrchvcrs,
+      \CYRCHRDSC,\cyrchrdsc,\CYRSCHWA,\cyrschwa
+    }
+    { \DeclareTextSymbolDefault {#1} {T2A} }
+  \ExplSyntaxOff
+\fi
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\ifPDFTeX
+  \input{glyphtounicode}
+  \pdfgentounicode=1
+\fi
+
+%----------FONT OPTIONS----------
+% sans-serif
+% \usepackage[sfdefault]{FiraSans}
+% \usepackage[sfdefault]{roboto}
+% \usepackage[sfdefault]{noto-sans}
+% \usepackage[default]{sourcesanspro}
+
+% serif
+% \usepackage{CormorantGaramond}
+% \usepackage{charter}
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+{% macro contact_line() -%}
+{%- set parts = [] -%}
+{%- if contact.location -%}
+  {%- set _ = parts.append(contact.location | latex) -%}
+{%- endif -%}
+{%- if contact.phone -%}
+  {%- set _ = parts.append(contact.phone | latex) -%}
+{%- endif -%}
+{%- if contact.email -%}
+  {%- set _ = parts.append('\\href{mailto:' ~ (contact.email | latex_url) ~ '}{\\underline{' ~ (contact.email | latex) ~ '}}') -%}
+{%- endif -%}
+{%- if contact.linkedin -%}
+  {%- set _ = parts.append('\\href{' ~ (contact.linkedin | latex_url) ~ '}{\\underline{' ~ (contact.linkedin | url_display | latex) ~ '}}') -%}
+{%- endif -%}
+{%- if contact.github -%}
+  {%- set _ = parts.append('\\href{' ~ (contact.github | latex_url) ~ '}{\\underline{' ~ (contact.github | url_display | latex) ~ '}}') -%}
+{%- endif -%}
+{%- if contact.website -%}
+  {%- set _ = parts.append('\\href{' ~ (contact.website | latex_url) ~ '}{\\underline{' ~ (contact.website | url_display | latex) ~ '}}') -%}
+{%- endif -%}
+{{- parts | join(' $|$ ') -}}
+{%- endmacro %}
+
+{% macro item_list(rows, nested=true) -%}
+{%- if rows %}
+    {%- if nested %}
+    \resumeItemListStart
+    {%- endif %}
+    {%- for row in rows %}
+      \resumeItem{ {{- row | latex -}} }
+    {%- endfor %}
+    {%- if nested %}
+    \resumeItemListEnd
+    {%- endif %}
+{%- endif %}
+{%- endmacro %}
+
+{% macro simple_entries(entries) -%}
+{%- if entries %}
+  \resumeSubHeadingListStart
+  {%- for entry in entries %}
+    {%- if entry.title or entry.subtitle or entry.dates %}
+    \resumeSubheading
+      { {{- entry.title | latex -}} }{ {{- entry.dates | latex -}} }
+      { {{- entry.subtitle | latex -}} }{}
+    {{- item_list(entry.details) }}
+    {%- else %}
+    {{- item_list(entry.details, false) }}
+    {%- endif %}
+  {%- endfor %}
+  \resumeSubHeadingListEnd
+{%- endif %}
+{%- endmacro %}
+
+\begin{document}
+
+\begin{center}
+    {%- if name %}
+    \textbf{\Huge \scshape {{ name | latex }}} \\ \vspace{1pt}
+    {%- endif %}
+    {%- if headline %}
+    \small \textit{ {{- headline | latex -}} } \\ \vspace{1pt}
+    {%- endif %}
+    {%- set header_contact = contact_line() %}
+    {%- if header_contact %}
+    \small {{ header_contact }}
+    {%- endif %}
+\end{center}
+
+{% for section in section_order %}
+{% if section == "summary" and summary %}
+\section{Summary}
+{{ summary | latex }}
+
+{% elif section == "experience" and (experience or experience_intro) %}
+\section{Experience}
+  \resumeSubHeadingListStart
+    {{- item_list(experience_intro, false) }}
+    {%- for job in experience %}
+    \resumeSubheading
+      { {{- job.title | latex -}} }{ {{- job.dates | latex -}} }
+      { {{- job.company | latex -}} }{ {{- job.location | latex -}} }
+    {{- item_list(job.bullets) }}
+    {%- endfor %}
+  \resumeSubHeadingListEnd
+
+{% elif section == "education" and (education or education_intro) %}
+\section{Education}
+  \resumeSubHeadingListStart
+    {{- item_list(education_intro, false) }}
+    {%- for school in education %}
+    \resumeSubheading
+      { {{- school.school | latex -}} }{ {{- school.location | latex -}} }
+      { {{- school.degree | latex -}} }{ {{- school.dates | latex -}} }
+    {{- item_list(school.details) }}
+    {%- endfor %}
+  \resumeSubHeadingListEnd
+
+{% elif section == "skills" and skills %}
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+    {%- for group in skills %}
+      \textbf{ {{- group.category | latex -}} }{: {{ group.names | map('latex') | join(', ') }}}{% if not loop.last %} \\{% endif %}
+    {%- endfor %}
+    }}
+ \end{itemize}
+
+{% elif section == "projects" and projects %}
+\section{Projects}
+  \resumeSubHeadingListStart
+    {%- for project in projects %}
+    \resumeProjectHeading
+      {\textbf{ {{- project.name | latex -}} }{% if project.technologies %} $|$ \emph{ {{- project.technologies | latex -}} }{% endif %}}{ {{- project.dates | latex -}} }
+    {{- item_list(project.bullets) }}
+    {%- endfor %}
+  \resumeSubHeadingListEnd
+
+{% elif section == "certifications" and certifications %}
+\section{Certifications}
+  \resumeSubHeadingListStart
+    {%- for cert in certifications %}
+    \resumeSubheading
+      { {{- cert.name | latex -}} }{ {{- cert.dates | latex -}} }
+      { {{- cert.issuer | latex -}} }{}
+    {%- endfor %}
+  \resumeSubHeadingListEnd
+
+{% elif section == "awards" and awards %}
+\section{Awards}
+{{- simple_entries(awards) }}
+
+{% elif section == "publications" and publications %}
+\section{Publications}
+{{- simple_entries(publications) }}
+
+{% elif section == "languages" and languages %}
+\section{Languages}
+{{- item_list(languages) }}
+
+{% elif section == "additional" and additional -%}
+{%- for extra in additional -%}
+{%- if extra.entries or extra.lines %}
+\section{ {{- extra.title | latex -}} }
+{{- simple_entries(extra.entries) }}
+{{- item_list(extra.lines) }}
+
+{%- endif -%}
+{%- endfor -%}
+{%- endif -%}
+{%- endfor %}
+
+\end{document}

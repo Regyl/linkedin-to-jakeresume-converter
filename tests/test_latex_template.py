@@ -1,0 +1,120 @@
+"""Custom LaTeX template rendering."""
+
+from pathlib import Path
+
+import pytest
+
+from main import build_parser
+from src.exception import ResumeError
+from src.latex_generator import write_resume
+from src.model import (
+    CertificationEntry,
+    Contact,
+    ContactLink,
+    EducationEntry,
+    ExperienceEntry,
+    ResumeData,
+)
+
+LINKS_TEMPLATE = Path(__file__).resolve().parents[1] / "data" / "templates" / "regyl_template.tex"
+
+CUSTOM_TEMPLATE = """\\documentclass{article}
+\\begin{document}
+{{ name | latex }}
+\\end{document}
+"""
+
+
+def test_custom_template_renders_without_jake_commands(tmp_path: Path) -> None:
+    template = tmp_path / "custom.tex"
+    template.write_text(CUSTOM_TEMPLATE, encoding="utf-8")
+    data = ResumeData(
+        name="Ada & Lovelace",
+        experience=[ExperienceEntry(title="Engineer")],
+    )
+
+    tex = write_resume(data, tmp_path / "out.tex", template)
+
+    assert r"Ada \& Lovelace" in tex
+    assert r"\newcommand{\resumeSubheading}" not in tex
+
+
+def test_missing_template_raises(tmp_path: Path) -> None:
+    with pytest.raises(ResumeError, match="does not exist"):
+        write_resume(ResumeData(name="Ada"), tmp_path / "out.tex", tmp_path / "missing.tex")
+
+
+def test_template_must_be_tex(tmp_path: Path) -> None:
+    template = tmp_path / "custom.txt"
+    template.write_text("not latex", encoding="utf-8")
+    with pytest.raises(ResumeError, match="not a .tex file"):
+        write_resume(ResumeData(name="Ada"), tmp_path / "out.tex", template)
+
+
+def test_links_template_names_sites_and_shrinks_certifications(tmp_path: Path) -> None:
+    data = ResumeData(
+        name="Ada",
+        contact=Contact(
+            email="ada@example.com",
+            links=[
+                ContactLink(url="https://github.com/ada", label="Portfolio"),
+                ContactLink(url="https://tryhackme.com/p/ada", label="Portfolio"),
+                ContactLink(url="https://t.me/ada", label="Personal"),
+                ContactLink(url="https://notes.example.com/ada", label="Notes"),
+            ],
+        ),
+        experience=[ExperienceEntry(title="Engineer")],
+        certifications=[CertificationEntry(name="EF SET", issuer="EF", dates="2024")],
+    )
+
+    tex = write_resume(data, tmp_path / "out.tex", LINKS_TEMPLATE)
+
+    assert "GitHub" in tex
+    assert "TryHackMe" in tex
+    assert "Telegram" in tex
+    assert "Notes" in tex
+    certifications = tex.split(r"\section{Certifications}", 1)[1]
+    assert r"\resumeItem{EF SET, EF (2024)}" in certifications
+    assert r"\resumeSubheading" not in certifications
+
+
+def test_regyl_template_uses_summary_font_for_role_meta(tmp_path: Path) -> None:
+    data = ResumeData(
+        summary="Builds reliable systems.",
+        experience=[
+            ExperienceEntry(
+                title="Engineer",
+                company="Acme",
+                dates="2020 -- 2024",
+                location="Moscow, Russia",
+            )
+        ],
+        education=[
+            EducationEntry(
+                school="State University",
+                degree="B.Sc. Computer Science",
+                dates="2016 -- 2020",
+                location="Kazan, Russia",
+            )
+        ],
+    )
+
+    tex = write_resume(data, tmp_path / "out.tex", LINKS_TEMPLATE)
+    experience = tex.split(r"\section{Experience}", 1)[1].split(r"\section{Education}", 1)[0]
+    education = tex.split(r"\section{Education}", 1)[1]
+
+    assert r"{\small Builds reliable systems.\par}" in tex
+    assert r"{\small{2020 -- 2024}}" in experience
+    assert r"{\small{Acme}}" in experience
+    assert r"{\small{Moscow, Russia}}" in experience
+    assert r"\textit" not in experience
+    assert r"{\small{2016 -- 2020}}" in education
+    assert r"\textit{\small{B.Sc. Computer Science}}" in education
+
+
+def test_template_flag_defaults_to_builtin() -> None:
+    args = build_parser().parse_args(["resume.pdf"])
+    assert args.template is None
+
+    args = build_parser().parse_args(["resume.pdf", "--template", "custom.tex"])
+    assert args.template == "custom.tex"
