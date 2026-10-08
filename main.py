@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import logging
+import os
 import sys
 import traceback
 from pathlib import Path
+from typing import NamedTuple
+
+from dotenv import load_dotenv
 
 from src.exception import ResumeError
 from src.latex_generator import compile_tex, write_resume
@@ -18,24 +21,43 @@ from src.util.utils import configure_cli_logging, display_output_path, ensure_ou
 
 log = logging.getLogger(__name__)
 
+_ENV_FILE = Path(__file__).resolve().parent / ".env"
+_TRUE_VALUES = {"1", "true", "yes", "on"}
+_FALSE_VALUES = {"", "0", "false", "no", "off"}
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Convert a LinkedIn-exported PDF resume into Jake's Resume LaTeX."
+
+class Settings(NamedTuple):
+    pdf_path: str
+    compile_tex: bool
+    template: str | None
+
+
+def _as_bool(name: str, value: str | None, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    normalized = value.strip().lower()
+    if normalized in _TRUE_VALUES:
+        return True
+    if normalized in _FALSE_VALUES:
+        return False
+    raise ResumeError(f"{name} in .env must be true or false")
+
+
+def load_settings(env_file: Path | None = None) -> Settings:
+    """Load conversion settings from the project .env file."""
+    load_dotenv(env_file if env_file is not None else _ENV_FILE)
+    pdf_path = os.getenv("PDF_PATH", "").strip()
+    if not pdf_path:
+        raise ResumeError(
+            "Set PDF_PATH in .env to the LinkedIn-exported PDF resume. "
+            "Copy .env.example to .env to get started."
+        )
+    template = os.getenv("TEMPLATE", "").strip() or None
+    return Settings(
+        pdf_path=pdf_path,
+        compile_tex=_as_bool("COMPILE", os.getenv("COMPILE")),
+        template=template,
     )
-    parser.add_argument("pdf_path", help="Path to the LinkedIn-exported PDF resume")
-    parser.add_argument(
-        "--compile",
-        action="store_true",
-        dest="compile_tex",
-        help="Compile the .tex file when pdflatex or xelatex is installed",
-    )
-    parser.add_argument(
-        "--template",
-        default=None,
-        help="Jinja LaTeX template (.tex). Defaults to data/templates/resume.tex",
-    )
-    return parser
 
 
 def convert(pdf_path: str, template_path: str | None = None) -> Path:
@@ -72,16 +94,20 @@ def _write_debug(output_path: Path, document: LinkedInDocument, data) -> None:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
+def main() -> int:
     configure_cli_logging()
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    output_path = convert(pdf_path=args.pdf_path, template_path=args.template)
+    try:
+        settings = load_settings()
+    except ResumeError as exc:
+        log.error("Error: %s", exc)
+        return 1
+
+    output_path = convert(pdf_path=settings.pdf_path, template_path=settings.template)
 
     log.info("Generated:")
     log.info(display_output_path(output_path))
 
-    if args.compile_tex:
+    if settings.compile_tex:
         try:
             compile_tex(output_path)
         except ResumeError as exc:

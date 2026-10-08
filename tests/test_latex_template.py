@@ -1,10 +1,11 @@
 """Custom LaTeX template rendering."""
 
+import os
 from pathlib import Path
 
 import pytest
 
-from main import build_parser
+from main import load_settings
 from src.exception import ResumeError
 from src.latex_generator import write_resume
 from src.model import (
@@ -112,9 +113,32 @@ def test_regyl_template_uses_summary_font_for_role_meta(tmp_path: Path) -> None:
     assert r"\textit{\small{B.Sc. Computer Science}}" in education
 
 
-def test_template_flag_defaults_to_builtin() -> None:
-    args = build_parser().parse_args(["resume.pdf"])
-    assert args.template is None
+def test_settings_load_from_dotenv(tmp_path: Path) -> None:
+    env_file = tmp_path / ".env"
+    keys = ("PDF_PATH", "COMPILE", "TEMPLATE")
+    previous = {key: os.environ.get(key) for key in keys}
+    try:
+        for key in keys:
+            os.environ.pop(key, None)
 
-    args = build_parser().parse_args(["resume.pdf", "--template", "custom.tex"])
-    assert args.template == "custom.tex"
+        env_file.write_text("PDF_PATH=resume.pdf\nCOMPILE=false\nTEMPLATE=\n", encoding="utf-8")
+        settings = load_settings(env_file)
+        assert settings.pdf_path == "resume.pdf"
+        assert settings.compile_tex is False
+        assert settings.template is None
+
+        for key in keys:
+            os.environ.pop(key, None)
+        env_file.write_text(
+            "PDF_PATH=resume.pdf\nCOMPILE=true\nTEMPLATE=custom.tex\n",
+            encoding="utf-8",
+        )
+        settings = load_settings(env_file)
+        assert settings.compile_tex is True
+        assert settings.template == "custom.tex"
+    finally:
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
