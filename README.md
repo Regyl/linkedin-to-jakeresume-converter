@@ -19,6 +19,7 @@ cp .env.example .env
 PDF_PATH=resume.pdf
 COMPILE=false
 TEMPLATE=
+PHOTO_PATH=
 ```
 
 Then run:
@@ -29,7 +30,7 @@ python main.py
 
 Output is at ./output folder.
 
-`PDF_PATH` is the LinkedIn-exported PDF. `COMPILE=true` compiles the generated `.tex` when `pdflatex` or `xelatex` is installed. `TEMPLATE` is optional and defaults to `data/templates/resume.tex`.
+`PDF_PATH` is the LinkedIn-exported PDF. `COMPILE=true` compiles the generated `.tex` when `pdflatex` or `xelatex` is installed. `TEMPLATE` is optional and defaults to `data/templates/resume.tex`. `PHOTO_PATH` is optional and, with `data/templates/regyl_template.tex`, places a circular avatar beside the header. `pdflatex` accepts `.jpg`, `.png`, and `.pdf`. A square headshot looks best.
 
 Custom template and compile:
 
@@ -37,6 +38,7 @@ Custom template and compile:
 PDF_PATH=Profile.pdf
 COMPILE=true
 TEMPLATE=data/templates/regyl_template.tex
+PHOTO_PATH=C:/Users/you/photo.jpg
 ```
 
 ### Compile

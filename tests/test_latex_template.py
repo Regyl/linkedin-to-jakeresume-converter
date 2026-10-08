@@ -113,9 +113,57 @@ def test_regyl_template_uses_summary_font_for_role_meta(tmp_path: Path) -> None:
     assert r"\textit{\small{B.Sc. Computer Science}}" in education
 
 
+def test_regyl_template_omits_avatar_without_photo(tmp_path: Path) -> None:
+    tex = write_resume(ResumeData(name="Ada"), tmp_path / "out.tex", LINKS_TEMPLATE)
+
+    assert r"\includegraphics" not in tex
+    assert r"\usepackage{graphicx}" not in tex
+
+
+def test_regyl_template_renders_circular_avatar(tmp_path: Path) -> None:
+    photo = tmp_path / "my_photo.jpg"
+    photo.write_bytes(b"")
+
+    tex = write_resume(
+        ResumeData(name="Ada"),
+        tmp_path / "out.tex",
+        LINKS_TEMPLATE,
+        photo=photo,
+    )
+
+    expected = photo.resolve().as_posix()
+    assert r"\usepackage{graphicx}" in tex
+    assert r"\usepackage{tikz}" in tex
+    assert r"\clip (0,0) circle (1.05cm);" in tex
+    assert r"\includegraphics[height=2.1cm]{\detokenize{" + expected + "}}" in tex
+
+
+def test_missing_photo_raises(tmp_path: Path) -> None:
+    with pytest.raises(ResumeError, match="does not exist"):
+        write_resume(
+            ResumeData(name="Ada"),
+            tmp_path / "out.tex",
+            LINKS_TEMPLATE,
+            photo=tmp_path / "missing.jpg",
+        )
+
+
+def test_photo_path_rejects_latex_breakers(tmp_path: Path) -> None:
+    photo = tmp_path / "a#b.jpg"
+    photo.write_bytes(b"")
+
+    with pytest.raises(ResumeError, match="cannot use in a filename"):
+        write_resume(
+            ResumeData(name="Ada"),
+            tmp_path / "out.tex",
+            LINKS_TEMPLATE,
+            photo=photo,
+        )
+
+
 def test_settings_load_from_dotenv(tmp_path: Path) -> None:
     env_file = tmp_path / ".env"
-    keys = ("PDF_PATH", "COMPILE", "TEMPLATE")
+    keys = ("PDF_PATH", "COMPILE", "TEMPLATE", "PHOTO_PATH")
     previous = {key: os.environ.get(key) for key in keys}
     try:
         for key in keys:
@@ -126,16 +174,19 @@ def test_settings_load_from_dotenv(tmp_path: Path) -> None:
         assert settings.pdf_path == "resume.pdf"
         assert settings.compile_tex is False
         assert settings.template is None
+        assert settings.photo is None
 
         for key in keys:
             os.environ.pop(key, None)
         env_file.write_text(
-            "PDF_PATH=resume.pdf\nCOMPILE=true\nTEMPLATE=custom.tex\n",
+            "PDF_PATH=resume.pdf\nCOMPILE=true\nTEMPLATE=custom.tex\n"
+            "PHOTO_PATH=photo.jpg\n",
             encoding="utf-8",
         )
         settings = load_settings(env_file)
         assert settings.compile_tex is True
         assert settings.template == "custom.tex"
+        assert settings.photo == "photo.jpg"
     finally:
         for key, value in previous.items():
             if value is None:

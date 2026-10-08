@@ -36,6 +36,8 @@ JAKE_COMMANDS = [
 _ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_PATH = _ROOT / "data" / "templates" / "resume.tex"
 _CONTACT_MAPPING_PATH = _ROOT / "data" / "contact_mapping.json"
+# These characters break a LaTeX filename even inside \detokenize.
+_PHOTO_PATH_BREAKERS = frozenset("%#{}")
 
 
 def _load_site_names() -> tuple[tuple[str, str], ...]:
@@ -79,7 +81,37 @@ def _is_builtin_template(path: Path) -> bool:
     return path.resolve() == TEMPLATE_PATH.resolve()
 
 
-def render_resume(data: ResumeData, template_path: Path | str | None = None) -> str:
+def resolve_photo_path(photo_path: Path | str | None) -> str | None:
+    """Absolute forward-slash path safe to drop into a LaTeX filename.
+
+    Compilation runs from the output directory, so a relative path would
+    not be found. ``%``, ``#``, and braces still break TeX while it reads
+    the ``\\detokenize`` argument.
+    """
+    if photo_path is None:
+        return None
+    raw = str(photo_path).strip()
+    if not raw:
+        return None
+    path = Path(raw)
+    if not path.is_file():
+        raise ResumeError(f"Photo file does not exist: {raw}")
+    resolved = path.resolve().as_posix()
+    broken = _PHOTO_PATH_BREAKERS.intersection(resolved)
+    if broken:
+        chars = ", ".join(sorted(broken))
+        raise ResumeError(
+            "Photo path contains characters LaTeX cannot use in a filename "
+            f"({chars}): {resolved}"
+        )
+    return resolved
+
+
+def render_resume(
+    data: ResumeData,
+    template_path: Path | str | None = None,
+    photo: Path | str | None = None,
+) -> str:
     path = _resolve_template(template_path)
     environment = Environment(
         loader=FileSystemLoader(str(path.parent)),
@@ -113,6 +145,7 @@ def render_resume(data: ResumeData, template_path: Path | str | None = None) -> 
         languages=data.languages,
         additional=data.additional,
         section_order=SECTION_ORDER,
+        photo=resolve_photo_path(photo),
     )
 
 
@@ -153,6 +186,9 @@ def find_suspicious(body: str) -> list[str]:
     index = 0
     while index < len(body):
         char = body[index]
+        if body.startswith(r"\detokenize", index):
+            index = _skip_detokenize(body, index)
+            continue
         if char == "\\":
             nxt = body[index + 1 : index + 2]
             if nxt in set("&%$#_{}~^\\"):
@@ -174,6 +210,31 @@ def find_suspicious(body: str) -> list[str]:
             issues.append(_snippet(body, index))
         index += 1
     return issues
+
+
+def _skip_detokenize(body: str, index: int) -> int:
+    """Move past ``\\detokenize{...}``. Its contents are a filename, not resume text."""
+    cursor = index + len(r"\detokenize")
+    if cursor < len(body) and body[cursor].isalpha():
+        return index + 1
+    while cursor < len(body) and body[cursor].isspace():
+        cursor += 1
+    if cursor >= len(body) or body[cursor] != "{":
+        return index + 1
+    depth = 0
+    while cursor < len(body):
+        char = body[cursor]
+        if char == "\\":
+            cursor += 2
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return cursor + 1
+        cursor += 1
+    return len(body)
 
 
 def _snippet(body: str, index: int) -> str:
@@ -209,9 +270,10 @@ def write_resume(
     data: ResumeData,
     output_path: Path,
     template_path: Path | str | None = None,
+    photo: Path | str | None = None,
 ) -> str:
     path = _resolve_template(template_path)
-    tex = render_resume(data, path)
+    tex = render_resume(data, path, photo=photo)
     validate_tex(tex, data, require_jake_commands=_is_builtin_template(path))
     output_path.write_text(tex, encoding="utf-8")
     return tex

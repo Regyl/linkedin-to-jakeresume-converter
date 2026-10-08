@@ -30,6 +30,7 @@ class Settings(NamedTuple):
     pdf_path: str
     compile_tex: bool
     template: str | None
+    photo: str | None
 
 
 def _as_bool(name: str, value: str | None, *, default: bool = False) -> bool:
@@ -53,14 +54,20 @@ def load_settings(env_file: Path | None = None) -> Settings:
             "Copy .env.example to .env to get started."
         )
     template = os.getenv("TEMPLATE", "").strip() or None
+    photo = os.getenv("PHOTO_PATH", "").strip() or None
     return Settings(
         pdf_path=pdf_path,
         compile_tex=_as_bool("COMPILE", os.getenv("COMPILE")),
         template=template,
+        photo=photo,
     )
 
 
-def convert(pdf_path: str, template_path: str | None = None) -> Path:
+def convert(
+    pdf_path: str,
+    template_path: str | None = None,
+    photo_path: str | None = None,
+) -> Path:
     source = Path(pdf_path)
     validate_pdf_path(source, display=pdf_path)
     output_path = Path("output") / f"{source.stem}.tex"
@@ -68,7 +75,7 @@ def convert(pdf_path: str, template_path: str | None = None) -> Path:
 
     document = read_resume(source)
     data = parse_document(document)
-    write_resume(data, output_path, template_path)
+    write_resume(data, output_path, template_path, photo=photo_path)
     _write_debug(output_path, document, data)
     return output_path
 
@@ -102,7 +109,11 @@ def main() -> int:
         log.error("Error: %s", exc)
         return 1
 
-    output_path = convert(pdf_path=settings.pdf_path, template_path=settings.template)
+    output_path = convert(
+        pdf_path=settings.pdf_path,
+        template_path=settings.template,
+        photo_path=settings.photo,
+    )
 
     log.info("Generated:")
     log.info(display_output_path(output_path))

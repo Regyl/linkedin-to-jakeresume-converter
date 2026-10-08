@@ -6,6 +6,7 @@
 %
 % Customized Jake's Resume layout. Renders every contact.links entry
 % and uses the smaller Experience item size for certifications.
+% An optional photo path renders as a circular avatar beside the header.
 % Jinja placeholders are filled from the parsed PDF.
 %------------------------
 
@@ -50,6 +51,10 @@
 \usepackage{verbatim}
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
+{% if photo %}
+\usepackage{graphicx}
+\usepackage{tikz}
+{% endif %}
 \usepackage{fancyhdr}
 \usepackage[english]{babel}
 \usepackage{tabularx}
@@ -149,6 +154,19 @@
 {{- parts | join(' $|$ ') -}}
 {%- endmacro %}
 
+{% macro header_identity() -%}
+    {%- if name %}
+    \textbf{\Huge \scshape {{ name | latex }}} \\ \vspace{1pt}
+    {%- endif %}
+    {%- if headline %}
+    \small{ {{- headline | latex -}} } \\ \vspace{1pt}
+    {%- endif %}
+    {%- set header_contact = contact_line() %}
+    {%- if header_contact %}
+    \small {{ header_contact }}
+    {%- endif %}
+{%- endmacro %}
+
 {% macro item_list(rows, nested=true) -%}
 {%- if rows %}
     {%- if nested %}
@@ -182,18 +200,24 @@
 
 \begin{document}
 
+{% if photo %}
+\noindent
+\begin{minipage}[c]{2.3cm}
+  \begin{tikzpicture}
+    \clip (0,0) circle (1.05cm);
+    \node[inner sep=0pt] at (0,0)
+      {\includegraphics[height=2.1cm]{\detokenize{ {{- photo -}} }}};
+  \end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}[c]{\dimexpr\textwidth-2.5cm\relax}
+  \centering
+  {{- header_identity() }}
+\end{minipage}
+{% else %}
 \begin{center}
-    {%- if name %}
-    \textbf{\Huge \scshape {{ name | latex }}} \\ \vspace{1pt}
-    {%- endif %}
-    {%- if headline %}
-    \small{ {{- headline | latex -}} } \\ \vspace{1pt}
-    {%- endif %}
-    {%- set header_contact = contact_line() %}
-    {%- if header_contact %}
-    \small {{ header_contact }}
-    {%- endif %}
+    {{- header_identity() }}
 \end{center}
+{% endif %}
 
 {% for section in section_order %}
 {% if section == "summary" and summary %}
